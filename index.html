@@ -207,7 +207,6 @@ color: #000000;
       transition: background 0.2s, transform 0.1s;
     }
 
-    background: #001f30;
     #add-btn:active { transform: scale(0.96); }
 
     #hint {
@@ -272,8 +271,7 @@ transform: none;
 <div id="hint" style="font-size: 0.88rem;">달팽이를 클릭하면 메시지를 볼 수 있고 곧 달팽이는 사라져요</div>
 
 <script>
-  /* ── 달팽이가 앉을 수 있는 나뭇가지 위치 (viewBox 680×520 기준 %) ── */
-const SPOTS = [
+  const SPOTS = [
     [.280,.220],[.400,.220],[.340,.200],[.240,.260],[.440,.260],
     [.300,.280],[.380,.280],[.340,.310],[.260,.300],[.420,.300],
     [.310,.240],[.370,.240],[.280,.320],[.400,.320],[.340,.260],
@@ -316,7 +314,7 @@ const SPOTS = [
     </svg>`;
   }
 
-function addSnail() {
+  function addSnail() {
     const input = document.getElementById('msg-input');
     const text = input.value.trim();
     if (!text) { input.focus(); return; }
@@ -346,6 +344,8 @@ function addSnail() {
     wrap.style.animationDelay = (Math.random()*2.5).toFixed(2)+'s';
     wrap.style.animationDuration = (2.5 + Math.random()*2).toFixed(2)+'s';
     wrap.innerHTML = snailSVG();
+    wrap.dataset.msg = text;
+    wrap.dataset.spotIdx = si;
     wrap.title = '클릭하면 메시지를 볼 수 있어요';
 
     wrap.addEventListener('click', () => openSnail(wrap, text, si));
@@ -359,15 +359,14 @@ function addSnail() {
 
     snailCount++;
     updateCounter();
+    saveSnails();
     input.value = '';
     input.focus();
   }
 
   function openSnail(wrap, text, si) {
-    wrap.removeEventListener('click', ()=>{});
     wrap.onclick = null;
 
-    /* bubble */
     const layer = document.getElementById('snails-layer');
     const wR = wrap.getBoundingClientRect();
     const lR = layer.getBoundingClientRect();
@@ -376,7 +375,7 @@ function addSnail() {
     bubble.className = 'bubble';
     bubble.textContent = text;
 
-let bx = wR.left - lR.left + 22 - 80;
+    let bx = wR.left - lR.left + 22 - 80;
     let by = wR.top  - lR.top  - 10;
     if (bx < 4) bx = 4;
     if (bx + 164 > lR.width - 4) bx = lR.width - 168;
@@ -385,11 +384,11 @@ let bx = wR.left - lR.left + 22 - 80;
     bubble.style.top  = by + 'px';
     layer.appendChild(bubble);
 
-    /* remove snail */
     wrap.classList.add('leaving');
     usedSpots.delete(si);
     snailCount = Math.max(0, snailCount - 1);
     updateCounter();
+    saveSnails();
 
     setTimeout(()=>{ wrap.remove(); }, 520);
     setTimeout(()=>{ bubble.classList.add('fade-out'); }, 2200);
@@ -403,7 +402,7 @@ let bx = wR.left - lR.left + 22 - 80;
     }
   }
 
-function updateCounter() {
+  function updateCounter() {
     const el = document.getElementById('counter');
     if (snailCount > 0) {
       const now = new Date();
@@ -413,6 +412,48 @@ function updateCounter() {
       el.textContent = '';
     }
   }
+
+  function saveSnails() {
+    const snails = [];
+    document.querySelectorAll('.snail-wrap').forEach(el => {
+      snails.push({
+        left: el.style.left,
+        top: el.style.top,
+        msg: el.dataset.msg,
+        spotIdx: el.dataset.spotIdx,
+        delay: el.style.animationDelay,
+        duration: el.style.animationDuration,
+        html: el.innerHTML
+      });
+    });
+    localStorage.setItem('snails', JSON.stringify(snails));
+  }
+
+  function loadSnails() {
+    const saved = JSON.parse(localStorage.getItem('snails') || '[]');
+    saved.forEach(s => {
+      const wrap = document.createElement('div');
+      wrap.className = 'snail-wrap';
+      wrap.style.left = s.left;
+      wrap.style.top = s.top;
+      wrap.style.animationDelay = s.delay;
+      wrap.style.animationDuration = s.duration;
+      wrap.innerHTML = s.html;
+      wrap.dataset.msg = s.msg;
+      wrap.dataset.spotIdx = s.spotIdx;
+      wrap.title = '클릭하면 메시지를 볼 수 있어요';
+      const si = parseInt(s.spotIdx);
+      usedSpots.add(si);
+      wrap.addEventListener('click', () => openSnail(wrap, s.msg, si));
+      document.getElementById('snails-layer').appendChild(wrap);
+      document.getElementById('empty-hint').style.display = 'none';
+      snailCount++;
+    });
+    updateCounter();
+  }
+
+  loadSnails();
+
   document.getElementById('msg-input').addEventListener('keydown', e=>{
     if (e.key==='Enter') addSnail();
   });
