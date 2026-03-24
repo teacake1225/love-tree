@@ -212,7 +212,7 @@ color: #000000;
 
     #hint {
       font-size: 0.78rem;
-      color: var(--text-muted);
+      color: #000000;
       text-align: center;
       margin-bottom: 1.5rem;
       z-index: 1;
@@ -244,7 +244,7 @@ transform: none;
 <body>
 
 <header>
-  <h1>🌳 달팽이 나무</h1>
+  <h1>🌳 조정인은 읽으세 🌳</h1>
   <p>글을 남기면 달팽이가 나무에 열림<br>달팽이를 클릭하면 메시지가 보임!</p>
 </header>
 
@@ -404,11 +404,16 @@ let bx = wR.left - lR.left + 22 - 80;
     }
   }
 
-  function updateCounter() {
+function updateCounter() {
     const el = document.getElementById('counter');
-    el.textContent = snailCount > 0 ? `🐌 나무에 달팽이 ${snailCount}마리` : '';
+    if (snailCount > 0) {
+      const now = new Date();
+      const time = now.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'});
+      el.textContent = `🐌 나무에 달팽이 ${snailCount}마리 · 마지막 ${time} 열림`;
+    } else {
+      el.textContent = '';
+    }
   }
-
   document.getElementById('msg-input').addEventListener('keydown', e=>{
     if (e.key==='Enter') addSnail();
   });
