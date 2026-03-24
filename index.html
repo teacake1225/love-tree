@@ -251,7 +251,7 @@ transform: none;
 <div id="tree-wrapper">
   <svg id="tree-svg" viewBox="0 0 680 520" xmlns="http://www.w3.org/2000/svg">
    <!-- trunk -->
-    <path d="M310 490 C308 455 305 420 308 390 C311 360 307 335 312 305" stroke="#5e3023" stroke-width="60" fill="none" stroke-linecap="round"/>
+    <rect x="310" y="300" width="60" height="200" rx="30" fill="#5e3023"/>
 
     <!-- leaves -->
     <circle cx="340" cy="210" r="170" fill="#4A7652"/>
@@ -317,10 +317,12 @@ const SPOTS = [
     </svg>`;
   }
 
-  function addSnail() {
+function addSnail() {
     const input = document.getElementById('msg-input');
     const text = input.value.trim();
     if (!text) { input.focus(); return; }
+    const pw = prompt('비밀번호를 입력하세요');
+    if (pw !== '10041004') { alert('비밀번호가 틀렸어요!'); return; }
 
     const si = pickSpot();
     if (si === null) {
