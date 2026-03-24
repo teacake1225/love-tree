@@ -181,18 +181,18 @@ header p {
     #msg-input {
       flex: 1;
       padding: 11px 16px;
-      border: 1.5px solid var(--border);
-      border-radius: 50px;
-      font-family: 'Do Hyeon', sans-serif;
-      font-size: 0.9rem;
-      background: var(--card);
-      color: var(--text);
+border: 1.5px solid #003049;
+border-radius: 50px;
+font-family: 'Asta Sans', sans-serif;
+font-size: 0.9rem;
+background: transparent;
+color: #000000;
       outline: none;
       transition: border-color 0.2s;
     }
 
     #msg-input:focus { border-color: var(--accent); }
-    #msg-input::placeholder { color: var(--text-muted); }
+    #msg-input::placeholder { color: #000000; }
 
     #add-btn {
       padding: 11px 20px;
@@ -225,7 +225,7 @@ right: 5%;
 transform: none;
       font-family: 'Asta Sans', sans-serif;
       font-size: 1rem;
-      color: var(--text-muted);
+      color: #000000;
       text-align: center;
       pointer-events: none;
       line-height: 1.8;
@@ -233,7 +233,7 @@ transform: none;
 
     #counter {
       font-size: 0.78rem;
-      color: var(--text-muted);
+      color: #000000;
       text-align: center;
       margin-top: -0.3rem;
       margin-bottom: 0.6rem;
@@ -250,18 +250,13 @@ transform: none;
 
 <div id="tree-wrapper">
   <svg id="tree-svg" viewBox="0 0 680 520" xmlns="http://www.w3.org/2000/svg">
-    <!-- ground -->
-    <ellipse cx="340" cy="490" rx="120" ry="14" fill="#C8A96E" opacity="0.35"/>
-
-    <!--  -->
-    <path d="M300 490 C298 460 295 435 298 410 C301 385 296 365 300 345 C304 325 308 305 315 288" stroke="#5e3023" stroke-width="52" fill="none" stroke-linecap="round"/>
+   <!-- trunk -->
+    <path d="M310 490 C308 455 305 420 308 390 C311 360 307 335 312 305" stroke="#5e3023" stroke-width="60" fill="none" stroke-linecap="round"/>
 
     <!-- leaves -->
-    <ellipse cx="340" cy="195" rx="160" ry="150" fill="#4A7652"/>
-    <ellipse cx="210" cy="240" rx="95"  ry="85"  fill="#4A7652"/>
-    <ellipse cx="470" cy="240" rx="95"  ry="85"  fill="#4A7652"/>
-    <ellipse cx="340" cy="175" rx="145" ry="135" fill="#5c9468"/>
-    <ellipse cx="340" cy="155" rx="115" ry="108" fill="#5c9468"/>
+    <circle cx="340" cy="210" r="170" fill="#4A7652"/>
+    <circle cx="340" cy="190" r="148" fill="#4A7652"/>
+    <ellipse cx="340" cy="220" rx="160" ry="140" fill="#4A7652"/>
   </svg>
 
   <div id="snails-layer">
