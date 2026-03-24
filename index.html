@@ -270,7 +270,24 @@ transform: none;
 <div id="counter"></div>
 <div id="hint" style="font-size: 0.88rem;">달팽이를 클릭하면 메시지를 볼 수 있고 곧 달팽이는 사라져요</div>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyATZS_tZQMCuj-bUsJ0Gc2-8nudib-gtvA",
+    authDomain: "love-tree-9a81b.firebaseapp.com",
+    databaseURL: "https://love-tree-9a81b-default-rtdb.firebaseio.com",
+    projectId: "love-tree-9a81b",
+    storageBucket: "love-tree-9a81b.firebasestorage.app",
+    messagingSenderId: "287631049251",
+    appId: "1:287631049251:web:5a9d56b723e3fa2310e796"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const snailsRef = ref(db, 'snails');
+
   const SPOTS = [
     [.280,.220],[.400,.220],[.340,.200],[.240,.260],[.440,.260],
     [.300,.280],[.380,.280],[.340,.310],[.260,.300],[.420,.300],
@@ -314,7 +331,51 @@ transform: none;
     </svg>`;
   }
 
-  function addSnail() {
+  function renderSnail(key, data) {
+    const si = data.spotIdx;
+    usedSpots.add(si);
+
+    const svg = document.getElementById('tree-svg');
+    const svgR = svg.getBoundingClientRect();
+    const layerR = document.getElementById('snails-layer').getBoundingClientRect();
+    const [px, py] = SPOTS[si];
+    const x = svgR.left - layerR.left + px * svgR.width;
+    const y = svgR.top  - layerR.top  + py * svgR.height;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'snail-wrap';
+    wrap.style.left = (x - 22) + 'px';
+    wrap.style.top  = (y - 19) + 'px';
+    wrap.style.animationDelay = data.delay + 's';
+    wrap.style.animationDuration = data.duration + 's';
+    wrap.innerHTML = data.html;
+    wrap.dataset.key = key;
+    wrap.title = '클릭하면 메시지를 볼 수 있어요';
+
+    wrap.addEventListener('click', () => openSnail(wrap, data.msg, si, key));
+    document.getElementById('snails-layer').appendChild(wrap);
+    document.getElementById('empty-hint').style.display = 'none';
+
+    snailCount++;
+    updateCounter();
+  }
+
+  onValue(snailsRef, (snapshot) => {
+    document.querySelectorAll('.snail-wrap').forEach(e => e.remove());
+    usedSpots.clear();
+    snailCount = 0;
+
+    const data = snapshot.val();
+    if (data) {
+      Object.entries(data).forEach(([key, val]) => renderSnail(key, val));
+      document.getElementById('empty-hint').style.display = 'none';
+    } else {
+      document.getElementById('empty-hint').style.display = '';
+    }
+    updateCounter();
+  });
+
+  window.addSnail = function() {
     const input = document.getElementById('msg-input');
     const text = input.value.trim();
     if (!text) { input.focus(); return; }
@@ -327,44 +388,19 @@ transform: none;
       return;
     }
 
-    usedSpots.add(si);
-    const [px, py] = SPOTS[si];
+    push(snailsRef, {
+      msg: text,
+      spotIdx: si,
+      delay: (Math.random()*2.5).toFixed(2),
+      duration: (2.5 + Math.random()*2).toFixed(2),
+      html: snailSVG()
+    });
 
-    const svg = document.getElementById('tree-svg');
-    const svgR = svg.getBoundingClientRect();
-    const layerR = document.getElementById('snails-layer').getBoundingClientRect();
-
-    const x = svgR.left - layerR.left + px * svgR.width;
-    const y = svgR.top  - layerR.top  + py * svgR.height;
-
-    const wrap = document.createElement('div');
-    wrap.className = 'snail-wrap';
-    wrap.style.left = (x - 22) + 'px';
-    wrap.style.top  = (y - 19) + 'px';
-    wrap.style.animationDelay = (Math.random()*2.5).toFixed(2)+'s';
-    wrap.style.animationDuration = (2.5 + Math.random()*2).toFixed(2)+'s';
-    wrap.innerHTML = snailSVG();
-    wrap.dataset.msg = text;
-    wrap.dataset.spotIdx = si;
-    wrap.title = '클릭하면 메시지를 볼 수 있어요';
-
-    wrap.addEventListener('click', () => openSnail(wrap, text, si));
-
-    document.getElementById('snails-layer').appendChild(wrap);
-    document.getElementById('empty-hint').style.display = 'none';
-
-    wrap.style.opacity = '0';
-    wrap.style.transition = 'opacity 0.4s';
-    requestAnimationFrame(()=>{ wrap.style.opacity='1'; });
-
-    snailCount++;
-    updateCounter();
-    saveSnails();
     input.value = '';
     input.focus();
   }
 
-  function openSnail(wrap, text, si) {
+  function openSnail(wrap, text, si, key) {
     wrap.onclick = null;
 
     const layer = document.getElementById('snails-layer');
@@ -385,21 +421,10 @@ transform: none;
     layer.appendChild(bubble);
 
     wrap.classList.add('leaving');
-    usedSpots.delete(si);
-    snailCount = Math.max(0, snailCount - 1);
-    updateCounter();
-    saveSnails();
+    remove(ref(db, 'snails/' + key));
 
-    setTimeout(()=>{ wrap.remove(); }, 520);
     setTimeout(()=>{ bubble.classList.add('fade-out'); }, 2200);
     setTimeout(()=>{ bubble.remove(); }, 2600);
-
-    const remaining = document.querySelectorAll('.snail-wrap').length - 1;
-    if (remaining <= 0) {
-      setTimeout(()=>{
-        document.getElementById('empty-hint').style.display = '';
-      }, 600);
-    }
   }
 
   function updateCounter() {
@@ -412,47 +437,6 @@ transform: none;
       el.textContent = '';
     }
   }
-
-  function saveSnails() {
-    const snails = [];
-    document.querySelectorAll('.snail-wrap').forEach(el => {
-      snails.push({
-        left: el.style.left,
-        top: el.style.top,
-        msg: el.dataset.msg,
-        spotIdx: el.dataset.spotIdx,
-        delay: el.style.animationDelay,
-        duration: el.style.animationDuration,
-        html: el.innerHTML
-      });
-    });
-    localStorage.setItem('snails', JSON.stringify(snails));
-  }
-
-  function loadSnails() {
-    const saved = JSON.parse(localStorage.getItem('snails') || '[]');
-    saved.forEach(s => {
-      const wrap = document.createElement('div');
-      wrap.className = 'snail-wrap';
-      wrap.style.left = s.left;
-      wrap.style.top = s.top;
-      wrap.style.animationDelay = s.delay;
-      wrap.style.animationDuration = s.duration;
-      wrap.innerHTML = s.html;
-      wrap.dataset.msg = s.msg;
-      wrap.dataset.spotIdx = s.spotIdx;
-      wrap.title = '클릭하면 메시지를 볼 수 있어요';
-      const si = parseInt(s.spotIdx);
-      usedSpots.add(si);
-      wrap.addEventListener('click', () => openSnail(wrap, s.msg, si));
-      document.getElementById('snails-layer').appendChild(wrap);
-      document.getElementById('empty-hint').style.display = 'none';
-      snailCount++;
-    });
-    updateCounter();
-  }
-
-  loadSnails();
 
   document.getElementById('msg-input').addEventListener('keydown', e=>{
     if (e.key==='Enter') addSnail();
